@@ -109,7 +109,7 @@ public class KafkaStore<K, V> implements Store<K, V> {
     this.brokerSeq = zkUtils.getAllBrokersInCluster();
 
     this.bootstrapBrokers = KafkaStore.getBrokerEndpoints(
-            JavaConversions.seqAsJavaList(this.brokerSeq));
+            JavaConversions.seqAsJavaList(this.brokerSeq), config.getString(SchemaRegistryConfig.KAFKASTORE_SECURITY_PROTOCOL_CONFIG));
 
     this.config = config;
   }
@@ -231,21 +231,20 @@ public class KafkaStore<K, V> implements Store<K, V> {
     }
   }
 
-  static String getBrokerEndpoints(List<Broker> brokerList) {
+  static String getBrokerEndpoints(List<Broker> brokerList, String securityProtocol) {
      StringBuilder sb = new StringBuilder();
 
     for (Broker broker : brokerList) {
       for(EndPoint ep : JavaConversions.asJavaCollection(broker.endPoints().values())) {
         String connectionString = ep.connectionString();
 
-        if (connectionString.startsWith(SchemaRegistryConfig.KAFKASTORE_SECURITY_PROTOCOL_SSL + "://")
-            || connectionString.startsWith(SchemaRegistryConfig.KAFKASTORE_SECURITY_PROTOCOL_PLAINTEXT + "://")) {
+        if (connectionString.startsWith(securityProtocol + "://")) {
           if (sb.length() > 0) {
             sb.append(",");
           }
           sb.append(connectionString);
         } else {
-          log.warn("Ignoring non-plaintext and non-SSL Kafka endpoint: " + connectionString);
+          log.warn("Ignoring endpoint: " + connectionString);
         }
       }
     }

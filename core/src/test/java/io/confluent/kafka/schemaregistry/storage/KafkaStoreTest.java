@@ -269,12 +269,12 @@ public class KafkaStoreTest extends ClusterTestHarness {
     String expectedEndpoint = endpoints.next().connectionString();
 
     assertEquals("Expected one PLAINTEXT endpoint for localhost", expectedEndpoint,
-            KafkaStore.getBrokerEndpoints(brokersList));
+            KafkaStore.getBrokerEndpoints(brokersList, SecurityProtocol.PLAINTEXT.toString()));
   }
 
   @Test(expected = ConfigException.class)
   public void testGetBrokerEndpointsEmpty() {
-    KafkaStore.getBrokerEndpoints(new ArrayList<Broker>());
+    KafkaStore.getBrokerEndpoints(new ArrayList<Broker>(), SecurityProtocol.PLAINTEXT.toString());
   }
 
   /**
@@ -284,21 +284,17 @@ public class KafkaStoreTest extends ClusterTestHarness {
    */
   @Test
   public void testGetBrokerEndpointsMixed() throws IOException {
-    List<Broker> brokersList = new ArrayList<Broker>(3);
+    List<Broker> brokersList = new ArrayList<Broker>(4);
     brokersList.add(new Broker(0, "localhost", TestUtils.RandomPort(), SecurityProtocol.PLAINTEXT));
     brokersList.add(new Broker(1, "localhost1", TestUtils.RandomPort(), SecurityProtocol.PLAINTEXT));
     brokersList.add(new Broker(2, "localhost2", TestUtils.RandomPort(), SecurityProtocol.SASL_PLAINTEXT));
     brokersList.add(new Broker(3, "localhost3", TestUtils.RandomPort(), SecurityProtocol.SSL));
 
-    String endpointsString = KafkaStore.getBrokerEndpoints(brokersList);
+    String endpointsString = KafkaStore.getBrokerEndpoints(brokersList, SecurityProtocol.PLAINTEXT.toString());
     String[] endpoints = endpointsString.split(",");
-    assertEquals("Expected a different number of endpoints.", brokersList.size() - 1, endpoints.length);
+    assertEquals("Expected a different number of endpoints.", 2, endpoints.length);
     for (String endpoint : endpoints) {
-      if (endpoint.contains("localhost3")) {
-        assertTrue("Endpoint must be a SSL endpoint.", endpoint.contains("SSL://"));
-      } else {
-        assertTrue("Endpoint must be a PLAINTEXT endpoint.", endpoint.contains("PLAINTEXT://"));
-      }
+      assertTrue("Endpoint must be a PLAINTEXT endpoint.", endpoint.contains("PLAINTEXT://"));
     }
   }
 }
