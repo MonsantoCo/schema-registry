@@ -246,12 +246,12 @@ public class KafkaStoreTest extends ClusterTestHarness {
     List<String> endpointsList = new ArrayList<String>();
     endpointsList.add("PLAINTEXT://hostname:1234");
     assertEquals("Expected one PLAINTEXT endpoint for localhost", endpoint,
-            KafkaStore.filterBrokerEndpoints(endpointsList));
+            KafkaStore.filterBrokerEndpoints(endpointsList, "PLAINTEXT"));
   }
 
   @Test(expected = ConfigException.class)
   public void testGetBrokerEndpointsEmpty() {
-    KafkaStore.filterBrokerEndpoints(new ArrayList<String>());
+    KafkaStore.filterBrokerEndpoints(new ArrayList<String>(), "PLAINTEXT");
   }
 
   @Test
@@ -264,18 +264,12 @@ public class KafkaStoreTest extends ClusterTestHarness {
     endpointsList.add("SASL_SSL://localhost2:1234");
     endpointsList.add("TRACE://localhost3:1234");
 
-    String endpointsString = KafkaStore.filterBrokerEndpoints(endpointsList);
+    String endpointsString = KafkaStore.filterBrokerEndpoints(endpointsList, "PLAINTEXT");
     String[] endpoints = endpointsString.split(",");
-    assertEquals("Expected a different number of endpoints.", endpointsList.size() - 1, endpoints.length);
+    assertEquals("Expected a different number of endpoints.", 2, endpoints.length);
     for (String endpoint : endpoints) {
       if (endpoint.contains("localhost0") || endpoint.contains("localhost1:1234")) {
         assertTrue("Endpoint must be a PLAINTEXT endpoint.", endpoint.contains("PLAINTEXT://"));
-      } else if (endpoint.contains("localhost1:1235")) {
-        assertTrue("Endpoint must be a SASL_PLAINTEXT endpoint.", endpoint.contains("SASL_PLAINTEXT://"));
-      } else if (endpoint.contains("localhost1:1236")) {
-        assertTrue("Endpoint must be a SSL endpoint.", endpoint.contains("SSL://"));
-      } else if (endpoint.contains("localhost2")) {
-        assertTrue("Endpoint must be a SASL_SSL endpoint.", endpoint.contains("SASL_SSL://"));
       }
     }
   }

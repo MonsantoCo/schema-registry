@@ -123,7 +123,7 @@ public class KafkaStore<K, V> implements Store<K, V> {
     } else {
       endpoints = bootstrapServersConfig;
     }
-    this.bootstrapBrokers = filterBrokerEndpoints(endpoints);
+    this.bootstrapBrokers = filterBrokerEndpoints(endpoints, config.getString(SchemaRegistryConfig.KAFKASTORE_SECURITY_PROTOCOL_CONFIG));
     log.info("Initializing KafkaStore with broker endpoints: " + this.bootstrapBrokers);
   }
 
@@ -281,20 +281,17 @@ public class KafkaStore<K, V> implements Store<K, V> {
     return endpoints;
   }
 
-  static String filterBrokerEndpoints(List<String> endpoints) {
+  static String filterBrokerEndpoints(List<String> endpoints, String securityProtocol) {
     StringBuilder sb = new StringBuilder();
 
     for (String endpoint : endpoints) {
-      if (endpoint.startsWith(SecurityProtocol.PLAINTEXT.toString() + "://")
-              || endpoint.startsWith(SecurityProtocol.SSL.toString() + "://")
-              || endpoint.startsWith(SecurityProtocol.SASL_PLAINTEXT.toString() + "://")
-              || endpoint.startsWith(SecurityProtocol.SASL_SSL.toString() + "://")) {
+      if (endpoint.startsWith(securityProtocol + "://")) {
         if (sb.length() > 0) {
           sb.append(",");
         }
         sb.append(endpoint);
       } else {
-        log.warn("Ignoring unsupported Kafka endpoint: " + endpoint);
+        log.warn("Ignoring unused Kafka endpoint: " + endpoint);
       }
     }
 
